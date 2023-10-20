@@ -46,7 +46,7 @@ class Ticket(models.Model):
     row = models.PositiveIntegerField()
     seat = models.PositiveIntegerField()
     show_session = models.ForeignKey(ShowSession, on_delete=models.CASCADE, related_name="tickets")
-    reservation = models.ForeignKey("Reservation", on_delete=models.CASCADE, related_name="tickets", null=True)
+    reservation = models.ForeignKey("Reservation", on_delete=models.CASCADE, related_name="tickets", null=False)
 
     def __str__(self):
         return f"{self.row} - {self.seat} - {self.show_session}"
@@ -57,7 +57,7 @@ class Reservation(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reservations")
 
     def __str__(self):
-        return f"{self.user} - {self.created_at}"
+        return str(self.user)
 
     class Meta:
         ordering = ["-created_at"]

@@ -3,16 +3,24 @@ from rest_framework import serializers
 from planetarium.models import AstronomyShow, ShowTheme, ShowSession, PlanetariumDome, Ticket, Reservation
 
 
+class ShowThemeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShowTheme
+        fields = ("id", "name")
+
+
 class AstronomyShowSerializer(serializers.ModelSerializer):
     class Meta:
         model = AstronomyShow
         fields = ("id", "title", "description", "show_theme")
 
 
-class ShowThemeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ShowTheme
-        fields = ("id", "name")
+class AstronomyShowListSerializer(AstronomyShowSerializer):
+    show_theme = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
+
+
+class AstronomyShowDetailSerializer(AstronomyShowSerializer):
+    show_theme = ShowThemeSerializer(many=True, read_only=True)
 
 
 class ShowSessionSerializer(serializers.ModelSerializer):
@@ -38,26 +46,42 @@ class PlanetariumDomeSerializer(serializers.ModelSerializer):
         fields = ("id", "name", "rows", "seats_in_row", "capacity")
 
 
+class ShowSessionDetailSerializer(ShowSessionListSerializer):
+    planetarium_dome = PlanetariumDomeSerializer(many=False, read_only=True)
+    astronomy_show = AstronomyShowListSerializer(many=False, read_only=True)
+
+
+class PlanetariumDomeDetailSerializer(PlanetariumDomeSerializer):
+    sessions = ShowSessionListSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = PlanetariumDome
+        fields = ("id", "name", "rows", "seats_in_row", "capacity", "sessions")
+
+
 class ReservationSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField(many=False, read_only=True)
+
     class Meta:
         model = Reservation
         fields = ("id", "created_at", "user")
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    show_session = ShowSessionSerializer(read_only=True)
-    reservation = ReservationSerializer(read_only=True)
 
     class Meta:
         model = Ticket
-        fields = ("id", "row", "seat", "show_session", "reservation")
+        fields = ("id", "row", "seat", "show_session")
+
+
+class TicketListSerializer(TicketSerializer):
+    astronomy_show = serializers.CharField(source="show_session.astronomy_show.title", read_only=True)
+    created_at = serializers.DateTimeField(source="reservation.created_at", format="%Y-%m-%d %H:%M:%S", read_only=True)
+
+    class Meta:
+        model = Ticket
+        fields = ("id", "row", "seat", "astronomy_show", "created_at")
 
 
 class TicketDetailSerializer(TicketSerializer):
     show_session = ShowSessionListSerializer(read_only=True)
-
-    class Meta:
-        model = Ticket
-        fields = ("id", "row", "seat", "show_session", "reservation")
-
-
