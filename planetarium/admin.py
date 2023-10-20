@@ -7,7 +7,6 @@ from planetarium.models import (
     PlanetariumDome,
     Ticket,
     Reservation,
-    User
 )
 
 admin.site.register(AstronomyShow)
@@ -16,4 +15,3 @@ admin.site.register(ShowSession)
 admin.site.register(PlanetariumDome)
 admin.site.register(Ticket)
 admin.site.register(Reservation)
-admin.site.register(User)

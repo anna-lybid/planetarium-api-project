@@ -7,13 +7,14 @@ from planetarium_api import settings
 class AstronomyShow(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField()
+    show_theme = models.ManyToManyField("ShowTheme", related_name="astronomy_shows")
 
     def __str__(self):
         return self.title
 
 
 class ShowTheme(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
         return self.name
@@ -29,9 +30,16 @@ class ShowSession(models.Model):
 
 
 class PlanetariumDome(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
     rows = models.PositiveIntegerField()
     seats_in_row = models.PositiveIntegerField()
+
+    @property
+    def capacity(self) -> int:
+        return self.rows * self.seats_in_row
+
+    def __str__(self):
+        return self.name
 
 
 class Ticket(models.Model):
@@ -51,6 +59,5 @@ class Reservation(models.Model):
     def __str__(self):
         return f"{self.user} - {self.created_at}"
 
-
-class User(AbstractUser):
-    pass
+    class Meta:
+        ordering = ["-created_at"]
