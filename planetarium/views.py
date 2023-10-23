@@ -1,4 +1,5 @@
 from django.db.models import Count, F
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import viewsets, status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import action
@@ -66,12 +67,12 @@ class ShowSessionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = self.queryset
-        show_session = self.request.query_params.get("show_sessions", None)
         planetarium_dome = self.request.query_params.get("planetarium_dome", None)
+        astronomy_show = self.request.query_params.get("astronomy_show", None)
 
-        if show_session:
-            show_sessions_ids = self._params_to_ints(show_session)
-            queryset = ShowSession.objects.filter(show_sessions__id__in=show_sessions_ids)
+        if astronomy_show:
+            astronomy_show_ids = self._params_to_ints(astronomy_show)
+            queryset = ShowSession.objects.filter(astronomy_show__id__in=astronomy_show_ids)
 
         if planetarium_dome:
             planetarium_dome_ids = self._params_to_ints(planetarium_dome)
@@ -96,6 +97,23 @@ class ShowSessionViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return ShowSessionDetailSerializer
         return self.serializer_class
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="astronomy_show",
+                type={"type": "list", "items": {"type": "number"}},
+                description="Filter by astronomy show id (ex. astronomy_show=1,2,3)",
+            ),
+            OpenApiParameter(
+                name="planetarium_dome",
+                type={"type": "list", "items": {"type": "number"}},
+                description="Filter by planetarium dome id (ex. planetarium_dome=1,2,3)",
+            )
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
 
 class PlanetariumDomeViewSet(viewsets.ModelViewSet):
