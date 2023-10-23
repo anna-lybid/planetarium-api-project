@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers
 
 from planetarium.models import AstronomyShow, ShowTheme, ShowSession, PlanetariumDome, Ticket, Reservation
@@ -59,14 +60,6 @@ class PlanetariumDomeDetailSerializer(PlanetariumDomeSerializer):
         fields = ("id", "name", "rows", "seats_in_row", "capacity", "sessions")
 
 
-class ReservationSerializer(serializers.ModelSerializer):
-    user = serializers.StringRelatedField(many=False, read_only=True)
-
-    class Meta:
-        model = Reservation
-        fields = ("id", "created_at", "user")
-
-
 class TicketSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -85,3 +78,23 @@ class TicketListSerializer(TicketSerializer):
 
 class TicketDetailSerializer(TicketSerializer):
     show_session = ShowSessionListSerializer(read_only=True)
+
+
+class ReservationSerializer(serializers.ModelSerializer):
+    tickets = TicketDetailSerializer(many=True, read_only=False, allow_empty=False)
+
+    class Meta:
+        model = Reservation
+        fields = ("id", "created_at", "tickets")
+
+    def create(self, validated_data):
+        with transaction.atomic():
+            tickets_data = validated_data.pop("tickets")
+            reservation = Reservation.objects.create(**validated_data)
+            for ticket_data in tickets_data:
+                Ticket.objects.create(reservation=reservation, **ticket_data)
+            return reservation
+
+
+class ReservationListSerializer(ReservationSerializer):
+    tickets = serializers.StringRelatedField(many=True, read_only=True)

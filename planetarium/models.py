@@ -49,7 +49,10 @@ class Ticket(models.Model):
     reservation = models.ForeignKey("Reservation", on_delete=models.CASCADE, related_name="tickets", null=False)
 
     def __str__(self):
-        return f"{self.row} - {self.seat} - {self.show_session}"
+        return f"row: {self.row} - seat: {self.seat}. Show: {self.show_session.astronomy_show.title}"
+
+    class Meta:
+        unique_together = ("row", "seat", "show_session")
 
 
 class Reservation(models.Model):

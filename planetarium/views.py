@@ -17,8 +17,12 @@ from planetarium.serializers import (
     ReservationSerializer,
     TicketDetailSerializer,
     ShowSessionListSerializer,
-    TicketListSerializer, AstronomyShowListSerializer, AstronomyShowDetailSerializer, ShowSessionDetailSerializer,
-    PlanetariumDomeDetailSerializer
+    TicketListSerializer,
+    AstronomyShowListSerializer,
+    AstronomyShowDetailSerializer,
+    ShowSessionDetailSerializer,
+    PlanetariumDomeDetailSerializer,
+    ReservationListSerializer,
 )
 
 
@@ -31,7 +35,7 @@ class AstronomyShowViewSet(viewsets.ModelViewSet):
             return AstronomyShowListSerializer
         if self.action == "retrieve":
             return AstronomyShowDetailSerializer
-        return AstronomyShowSerializer
+        return self.serializer_class
 
 
 class ShowThemeViewSet(viewsets.ModelViewSet):
@@ -48,7 +52,7 @@ class ShowSessionViewSet(viewsets.ModelViewSet):
             return ShowSessionListSerializer
         if self.action == "retrieve":
             return ShowSessionDetailSerializer
-        return ShowSessionSerializer
+        return self.serializer_class
 
 
 class PlanetariumDomeViewSet(viewsets.ModelViewSet):
@@ -58,7 +62,7 @@ class PlanetariumDomeViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "retrieve":
             return PlanetariumDomeDetailSerializer
-        return PlanetariumDomeSerializer
+        return self.serializer_class
 
 
 class TicketViewSet(viewsets.ModelViewSet):
@@ -73,7 +77,7 @@ class TicketViewSet(viewsets.ModelViewSet):
             return TicketDetailSerializer
         if self.action == "list":
             return TicketListSerializer
-        return TicketSerializer
+        return self.serializer_class
 
     def perform_create(self, serializer):
         reservation = Reservation.objects.create(user=self.request.user)
@@ -84,9 +88,13 @@ class ReservationViewSet(viewsets.ModelViewSet):
     queryset = Reservation.objects.all()
     serializer_class = ReservationSerializer
 
+    def get_serializer_class(self):
+        if self.action == "list":
+            return ReservationListSerializer
+        return self.serializer_class
+
     def get_queryset(self):
         return Reservation.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-
