@@ -47,6 +47,25 @@ class ShowSessionViewSet(viewsets.ModelViewSet):
     queryset = ShowSession.objects.all()
     serializer_class = ShowSessionSerializer
 
+    @staticmethod
+    def _params_to_ints(qs):
+        return [int(str_id) for str_id in qs.split(",")]
+
+    def get_queryset(self):
+        queryset = self.queryset
+        show_session = self.request.query_params.get("show_sessions", None)
+        planetarium_dome = self.request.query_params.get("planetarium_dome", None)
+
+        if show_session:
+            show_sessions_ids = self._params_to_ints(show_session)
+            queryset = ShowSession.objects.filter(show_sessions__id__in=show_sessions_ids)
+
+        if planetarium_dome:
+            planetarium_dome_ids = self._params_to_ints(planetarium_dome)
+            queryset = ShowSession.objects.filter(planetarium_dome__id__in=planetarium_dome_ids)
+
+        return queryset.distinct()
+
     def get_serializer_class(self):
         if self.action == "list":
             return ShowSessionListSerializer
