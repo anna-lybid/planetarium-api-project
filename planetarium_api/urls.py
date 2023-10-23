@@ -11,10 +11,12 @@ from drf_spectacular.views import (
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/planetarium/", include("planetarium.urls", namespace="planetarium")),
+    path(
+        "api/planetarium/",
+        include("planetarium.urls", namespace="planetarium"),
+    ),
     path("__debug__/", include("debug_toolbar.urls")),
     path("api/user/", include("user.urls", namespace="user")),
-
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
         "api/schema/swagger/",

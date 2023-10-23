@@ -4,14 +4,18 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 from planetarium.models import PlanetariumDome, ShowTheme, AstronomyShow
-from planetarium.serializers import AstronomyShowListSerializer, PlanetariumDomeSerializer, ShowThemeSerializer
+from planetarium.serializers import (
+    AstronomyShowListSerializer,
+    PlanetariumDomeSerializer,
+    ShowThemeSerializer,
+)
 
 ASTRONOMY_SHOW_URL = reverse("planetarium:astronomyshow-list")
 PLANETARIUM_DOME_URL = reverse("planetarium:planetariumdome-list")
 SHOW_THEME_URL = reverse("planetarium:showtheme-list")
 
 
-def sample_astronomy_show(**params):
+def sample_astronomy_show(**params) -> AstronomyShow:
     defaults = {
         "title": "Astronomy Show 1",
         "description": "Some description",
@@ -21,7 +25,7 @@ def sample_astronomy_show(**params):
     return AstronomyShow.objects.create(**defaults)
 
 
-def sample_planetarium_dome(**params):
+def sample_planetarium_dome(**params) -> PlanetariumDome:
     defaults = {
         "name": "Planetarium Dome 1",
         "rows": 5,
@@ -31,7 +35,7 @@ def sample_planetarium_dome(**params):
     return PlanetariumDome.objects.create(**defaults)
 
 
-def sample_show_theme(**params):
+def sample_show_theme(**params) -> ShowTheme:
     defaults = {
         "name": "Show Theme 1",
     }
@@ -39,29 +43,29 @@ def sample_show_theme(**params):
     return ShowTheme.objects.create(**defaults)
 
 
-def detail_url(instance_id):
+def detail_url(instance_id) -> str:
     return reverse("planetarium:astronomyshow-detail", args=[instance_id])
 
 
 class UnauthenticatedShowsApiTests(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.client = APIClient()
 
-    def test_show_theme_auth_required(self):
+    def test_show_theme_auth_required(self) -> None:
         response = self.client.get(SHOW_THEME_URL)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_astronomy_show_auth_required(self):
+    def test_astronomy_show_auth_required(self) -> None:
         response = self.client.get(ASTRONOMY_SHOW_URL)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_planetarium_dome_auth_required(self):
+    def test_planetarium_dome_auth_required(self) -> None:
         response = self.client.get(PLANETARIUM_DOME_URL)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class AuthenticatedShowsApiTests(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(
             email="test@user.com",
@@ -69,7 +73,7 @@ class AuthenticatedShowsApiTests(TestCase):
         )
         self.client.force_authenticate(user=self.user)
 
-    def test_retrieve_domes(self):
+    def test_retrieve_domes(self) -> None:
         sample_planetarium_dome()
         sample_planetarium_dome(name="Planetarium Dome 2")
 
@@ -81,7 +85,7 @@ class AuthenticatedShowsApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, serializer.data)
 
-    def test_create_dome_forbidden(self):
+    def test_create_dome_forbidden(self) -> None:
         payload = {
             "name": "Planetarium Dome 1",
             "rows": 5,
@@ -92,7 +96,7 @@ class AuthenticatedShowsApiTests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_retrieve_show_themes(self):
+    def test_retrieve_show_themes(self) -> None:
         sample_show_theme()
         sample_show_theme(name="Show Theme 2")
 
@@ -104,14 +108,14 @@ class AuthenticatedShowsApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, serializer.data)
 
-    def test_retrieve_shows(self):
+    def test_retrieve_shows(self) -> None:
         sample_astronomy_show()
 
         response = self.client.get(ASTRONOMY_SHOW_URL)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_retrieve_single_show(self):
+    def test_retrieve_single_show(self) -> None:
         show = sample_astronomy_show()
         url = detail_url(show.id)
 
@@ -121,7 +125,7 @@ class AuthenticatedShowsApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, serializer.data)
 
-    def test_create_show_forbidden(self):
+    def test_create_show_forbidden(self) -> None:
         show_theme = ShowTheme.objects.create(name="Show Theme 1")
         payload = {
             "title": "Astronomy Show 1",
@@ -134,7 +138,7 @@ class AuthenticatedShowsApiTests(TestCase):
 
 
 class AdminShowsApiTests(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(
             email="test@user.com",
@@ -143,7 +147,7 @@ class AdminShowsApiTests(TestCase):
         )
         self.client.force_authenticate(user=self.user)
 
-    def test_create_dome_successful(self):
+    def test_create_dome_successful(self) -> None:
         payload = {
             "name": "Planetarium Dome 1",
             "rows": 3,
@@ -158,7 +162,7 @@ class AdminShowsApiTests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    def test_create_show_successful(self):
+    def test_create_show_successful(self) -> None:
         show_theme = ShowTheme.objects.create(name="Show Theme 1")
         payload = {
             "title": "Astronomy Show 1",
@@ -169,7 +173,7 @@ class AdminShowsApiTests(TestCase):
         response = self.client.post(ASTRONOMY_SHOW_URL, payload)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    def test_create_show_invalid(self):
+    def test_create_show_invalid(self) -> None:
         payload = {
             "title": "",
             "description": "Some description",
@@ -178,14 +182,14 @@ class AdminShowsApiTests(TestCase):
         response = self.client.post(ASTRONOMY_SHOW_URL, payload)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_delete_show_successful(self):
+    def test_delete_show_successful(self) -> None:
         show = sample_astronomy_show()
         url = detail_url(show.id)
 
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-    def test_create_show_theme_successful(self):
+    def test_create_show_theme_successful(self) -> None:
         payload = {
             "name": "Show Theme 3",
         }
@@ -198,7 +202,7 @@ class AdminShowsApiTests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    def test_create_show_theme_invalid(self):
+    def test_create_show_theme_invalid(self) -> None:
         payload = {
             "name": "",
         }
@@ -207,7 +211,7 @@ class AdminShowsApiTests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_create_show_theme_duplicate(self):
+    def test_create_show_theme_duplicate(self) -> None:
         sample_show_theme()
         payload = {
             "name": "Show Theme 1",

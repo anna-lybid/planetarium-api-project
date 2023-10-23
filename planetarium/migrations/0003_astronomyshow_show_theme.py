@@ -5,7 +5,10 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("planetarium", "0002_alter_planetariumdome_name_alter_showtheme_name"),
+        (
+            "planetarium",
+            "0002_alter_planetariumdome_name_alter_showtheme_name",
+        ),
     ]
 
     operations = [
