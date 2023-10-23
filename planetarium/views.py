@@ -1,5 +1,6 @@
 from django.db.models import Count, F
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 
 from planetarium.models import (
     AstronomyShow,
@@ -23,7 +24,7 @@ from planetarium.serializers import (
     AstronomyShowDetailSerializer,
     ShowSessionDetailSerializer,
     PlanetariumDomeDetailSerializer,
-    ReservationListSerializer,
+    ReservationListSerializer, ReservationDetailSerializer,
 )
 
 
@@ -120,18 +121,31 @@ class TicketViewSet(viewsets.ModelViewSet):
         serializer.save(reservation=reservation)
 
 
+class OrderPagination(PageNumberPagination):
+    page_size = 3
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+
 class ReservationViewSet(viewsets.ModelViewSet):
     queryset = Reservation.objects.all()
     serializer_class = ReservationSerializer
+    pagination_class = OrderPagination
 
     def get_serializer_class(self):
         if self.action == "list":
             return ReservationListSerializer
+        if self.action == "retrieve":
+            return ReservationDetailSerializer
         return self.serializer_class
 
     def get_queryset(self):
         queryset = Reservation.objects.filter(user=self.request.user)
-        queryset = queryset.prefetch_related("tickets__show_session__astronomy_show")
+        if self.action in ["list", "retrieve"]:
+            queryset = queryset.prefetch_related(
+                "tickets__show_session__astronomy_show",
+                "tickets__show_session__planetarium_dome"
+            )
         return queryset
 
     def perform_create(self, serializer):

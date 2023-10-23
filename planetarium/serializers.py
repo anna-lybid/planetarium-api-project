@@ -99,10 +99,11 @@ class PlanetariumDomeDetailSerializer(PlanetariumDomeSerializer):
 class TicketListSerializer(TicketSerializer):
     astronomy_show = serializers.CharField(source="show_session.astronomy_show.title", read_only=True)
     created_at = serializers.DateTimeField(source="reservation.created_at", format="%Y-%m-%d %H:%M:%S", read_only=True)
+    planetarium_dome = serializers.CharField(source="show_session.planetarium_dome.name", read_only=True)
 
     class Meta:
         model = Ticket
-        fields = ("id", "row", "seat", "astronomy_show", "created_at")
+        fields = ("id", "row", "seat", "astronomy_show", "planetarium_dome", "created_at")
 
 
 class TicketDetailSerializer(TicketSerializer):
@@ -110,7 +111,7 @@ class TicketDetailSerializer(TicketSerializer):
 
 
 class ReservationSerializer(serializers.ModelSerializer):
-    tickets = TicketDetailSerializer(many=True, read_only=False, allow_empty=False)
+    tickets = TicketSerializer(many=True, read_only=False, allow_empty=False)
 
     class Meta:
         model = Reservation
@@ -126,4 +127,8 @@ class ReservationSerializer(serializers.ModelSerializer):
 
 
 class ReservationListSerializer(ReservationSerializer):
-    tickets = serializers.StringRelatedField(many=True, read_only=True)
+    tickets = TicketListSerializer(many=True, read_only=True)
+
+
+class ReservationDetailSerializer(ReservationSerializer):
+    tickets = TicketDetailSerializer(many=True, read_only=True)
