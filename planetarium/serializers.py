@@ -34,39 +34,6 @@ class ShowSessionSerializer(serializers.ModelSerializer):
         fields = ("id", "astronomy_show", "planetarium_dome", "show_time")
 
 
-class ShowSessionListSerializer(ShowSessionSerializer):
-    planetarium_dome = serializers.StringRelatedField(many=False, read_only=True)
-    astronomy_show = serializers.SlugRelatedField(many=False, read_only=True, slug_field="title")
-    tickets_left = serializers.IntegerField(read_only=True)
-    tickets_sold = serializers.IntegerField(read_only=True)
-
-    class Meta:
-        model = ShowSession
-        fields = ("id", "astronomy_show", "planetarium_dome", "show_time", "tickets_sold", "tickets_left")
-
-
-class PlanetariumDomeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PlanetariumDome
-        fields = ("id", "name", "rows", "seats_in_row", "capacity")
-        validators = [
-            UniqueValidator(queryset=PlanetariumDome.objects.all(), message="Planetarium dome with this name already exists.")
-        ]
-
-
-class ShowSessionDetailSerializer(ShowSessionListSerializer):
-    planetarium_dome = PlanetariumDomeSerializer(many=False, read_only=True)
-    astronomy_show = AstronomyShowListSerializer(many=False, read_only=True)
-
-
-class PlanetariumDomeDetailSerializer(PlanetariumDomeSerializer):
-    sessions = ShowSessionListSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = PlanetariumDome
-        fields = ("id", "name", "rows", "seats_in_row", "capacity", "sessions")
-
-
 class TicketSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -85,6 +52,48 @@ class TicketSerializer(serializers.ModelSerializer):
             num_rows=attrs["show_session"].planetarium_dome.rows,
         )
         return data
+
+
+class ShowSessionListSerializer(ShowSessionSerializer):
+    planetarium_dome = serializers.StringRelatedField(many=False, read_only=True)
+    astronomy_show = serializers.SlugRelatedField(many=False, read_only=True, slug_field="title")
+    tickets_left = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = ShowSession
+        fields = ("id", "astronomy_show", "planetarium_dome", "show_time", "tickets_left")
+
+
+class PlanetariumDomeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlanetariumDome
+        fields = ("id", "name", "rows", "seats_in_row", "capacity")
+        validators = [
+            UniqueValidator(queryset=PlanetariumDome.objects.all(), message="Planetarium dome with this name already exists.")
+        ]
+
+
+class ShowSessionDetailSerializer(ShowSessionListSerializer):
+    planetarium_dome = PlanetariumDomeSerializer(many=False, read_only=True)
+    astronomy_show = AstronomyShowListSerializer(many=False, read_only=True)
+    taken_seats = serializers.SlugRelatedField(
+        source="tickets",
+        many=True,
+        read_only=True,
+        slug_field="seat"
+    )
+
+    class Meta:
+        model = ShowSession
+        fields = ("id", "astronomy_show", "planetarium_dome", "show_time", "taken_seats")
+
+
+class PlanetariumDomeDetailSerializer(PlanetariumDomeSerializer):
+    sessions = ShowSessionListSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = PlanetariumDome
+        fields = ("id", "name", "rows", "seats_in_row", "capacity", "sessions")
 
 
 class TicketListSerializer(TicketSerializer):

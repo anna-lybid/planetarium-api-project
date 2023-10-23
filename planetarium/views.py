@@ -1,3 +1,4 @@
+from django.db.models import Count, F
 from rest_framework import viewsets
 
 from planetarium.models import (
@@ -27,7 +28,7 @@ from planetarium.serializers import (
 
 
 class AstronomyShowViewSet(viewsets.ModelViewSet):
-    queryset = AstronomyShow.objects.all()
+    queryset = AstronomyShow.objects.prefetch_related("show_theme")
     serializer_class = AstronomyShowSerializer
 
     def get_serializer_class(self):
@@ -64,6 +65,17 @@ class ShowSessionViewSet(viewsets.ModelViewSet):
             planetarium_dome_ids = self._params_to_ints(planetarium_dome)
             queryset = ShowSession.objects.filter(planetarium_dome__id__in=planetarium_dome_ids)
 
+        if self.action == "list":
+            capacity = F("planetarium_dome__rows") * F("planetarium_dome__seats_in_row")
+            queryset = (
+                queryset
+                .select_related("astronomy_show", "planetarium_dome")
+                .annotate(tickets_left=capacity - Count("tickets"))
+            )
+
+        if self.action == "retrieve":
+            queryset = queryset.select_related("astronomy_show", "planetarium_dome")
+
         return queryset.distinct()
 
     def get_serializer_class(self):
@@ -89,7 +101,12 @@ class TicketViewSet(viewsets.ModelViewSet):
     serializer_class = TicketSerializer
 
     def get_queryset(self):
-        return Ticket.objects.filter(reservation__user=self.request.user)
+        queryset = Ticket.objects.filter(reservation__user=self.request.user)
+
+        if self.action in ["list", "retrieve"]:
+            queryset = queryset.select_related("show_session__astronomy_show", "reservation")
+
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "retrieve":
@@ -113,7 +130,9 @@ class ReservationViewSet(viewsets.ModelViewSet):
         return self.serializer_class
 
     def get_queryset(self):
-        return Reservation.objects.filter(user=self.request.user)
+        queryset = Reservation.objects.filter(user=self.request.user)
+        queryset = queryset.prefetch_related("tickets__show_session__astronomy_show")
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
