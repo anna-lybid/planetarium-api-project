@@ -93,7 +93,13 @@ class PlanetariumDomeDetailSerializer(PlanetariumDomeSerializer):
 
     class Meta:
         model = PlanetariumDome
-        fields = ("id", "name", "rows", "seats_in_row", "capacity", "sessions")
+        fields = ("id", "name", "rows", "seats_in_row", "capacity", "sessions", "image")
+
+
+class PlanetariumDomeImageSerializer(PlanetariumDomeSerializer):
+    class Meta:
+        model = PlanetariumDome
+        fields = ("id", "image")
 
 
 class TicketListSerializer(TicketSerializer):
