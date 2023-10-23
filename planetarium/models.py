@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from rest_framework.exceptions import ValidationError
 
 from planetarium_api import settings
 
@@ -48,11 +49,26 @@ class Ticket(models.Model):
     show_session = models.ForeignKey(ShowSession, on_delete=models.CASCADE, related_name="tickets")
     reservation = models.ForeignKey("Reservation", on_delete=models.CASCADE, related_name="tickets", null=False)
 
-    def __str__(self):
-        return f"row: {self.row} - seat: {self.seat}. Show: {self.show_session.astronomy_show.title}"
-
     class Meta:
         unique_together = ("row", "seat", "show_session")
+
+    def __str__(self) -> str:
+        return f"row: {self.row} - seat: {self.seat}. Show: {self.show_session.astronomy_show.title}"
+
+    @staticmethod
+    def validate_seat_and_row(seat: int, num_seat: int, row: int, num_rows: int):
+        if row > num_rows:
+            raise ValidationError("Row number is too big for this planetarium dome.")
+        if seat > num_seat:
+            raise ValidationError("Seat number is too big for this row.")
+
+    def clean(self):
+        Ticket.validate_seat_and_row(
+            seat=self.seat,
+            num_seat=self.show_session.planetarium_dome.seats_in_row,
+            row=self.row,
+            num_rows=self.show_session.planetarium_dome.rows,
+        )
 
 
 class Reservation(models.Model):

@@ -1,5 +1,6 @@
 from django.db import transaction
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator, UniqueTogetherValidator
 
 from planetarium.models import AstronomyShow, ShowTheme, ShowSession, PlanetariumDome, Ticket, Reservation
 
@@ -8,6 +9,9 @@ class ShowThemeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShowTheme
         fields = ("id", "name")
+        validators = [
+            UniqueValidator(queryset=ShowTheme.objects.all(), message="Show theme with this name already exists.")
+        ]
 
 
 class AstronomyShowSerializer(serializers.ModelSerializer):
@@ -45,6 +49,9 @@ class PlanetariumDomeSerializer(serializers.ModelSerializer):
     class Meta:
         model = PlanetariumDome
         fields = ("id", "name", "rows", "seats_in_row", "capacity")
+        validators = [
+            UniqueValidator(queryset=PlanetariumDome.objects.all(), message="Planetarium dome with this name already exists.")
+        ]
 
 
 class ShowSessionDetailSerializer(ShowSessionListSerializer):
@@ -65,6 +72,19 @@ class TicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
         fields = ("id", "row", "seat", "show_session")
+        validators = [
+            UniqueTogetherValidator(Ticket.objects.all(), ["row", "seat", "show_session"], message="This seat is already taken.")
+        ]
+
+    def validate(self, attrs):
+        data = super(TicketSerializer, self).validate(attrs)
+        Ticket.validate_seat_and_row(
+            seat=attrs["seat"],
+            num_seat=attrs["show_session"].planetarium_dome.seats_in_row,
+            row=attrs["row"],
+            num_rows=attrs["show_session"].planetarium_dome.rows,
+        )
+        return data
 
 
 class TicketListSerializer(TicketSerializer):
