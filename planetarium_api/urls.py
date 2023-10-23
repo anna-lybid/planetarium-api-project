@@ -8,6 +8,7 @@ from drf_spectacular.views import (
     SpectacularRedocView,
 )
 
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/planetarium/", include("planetarium.urls", namespace="planetarium")),
