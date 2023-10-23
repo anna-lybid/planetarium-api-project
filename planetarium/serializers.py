@@ -6,12 +6,13 @@ from planetarium.models import AstronomyShow, ShowTheme, ShowSession, Planetariu
 
 
 class ShowThemeSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(
+        validators=[UniqueValidator(queryset=ShowTheme.objects.all(), message="Show theme with this name already exists.")]
+    )
+
     class Meta:
         model = ShowTheme
         fields = ("id", "name")
-        validators = [
-            UniqueValidator(queryset=ShowTheme.objects.all(), message="Show theme with this name already exists.")
-        ]
 
 
 class AstronomyShowSerializer(serializers.ModelSerializer):
@@ -65,12 +66,15 @@ class ShowSessionListSerializer(ShowSessionSerializer):
 
 
 class PlanetariumDomeSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(
+        validators=[UniqueValidator(
+            queryset=PlanetariumDome.objects.all(),
+            message="Planetarium dome with this name already exists.")]
+    )
+
     class Meta:
         model = PlanetariumDome
         fields = ("id", "name", "rows", "seats_in_row", "capacity")
-        validators = [
-            UniqueValidator(queryset=PlanetariumDome.objects.all(), message="Planetarium dome with this name already exists.")
-        ]
 
 
 class ShowSessionDetailSerializer(ShowSessionListSerializer):
