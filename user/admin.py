@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.utils.translation import gettext as _
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
+
 from user.models import User
 
 
